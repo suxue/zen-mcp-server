@@ -58,8 +58,9 @@
       "supports_images": false,
       "max_image_size_mb": 0.0,
       "supports_temperature": true,
+      "supports_streaming": true,
       "is_custom": true,
-      "description": "Local Grok-3 model - advanced writing capabilities"
+      "description": "Ideal for expansive long-form and creative content generation. Its large context window handles complex inputs well, making it suitable for tasks requiring expressive fluency when compute cost is secondary to performance."
     },
     {
       "model_name": "grok-3-mini",
@@ -72,7 +73,8 @@
       "max_image_size_mb": 0.0,
       "supports_temperature": true,
       "is_custom": true,
-      "description": "Local Grok-3 mini model - advanced reasoning capabilities"
+      "supports_streaming": true,
+      "description": "A distilled version of Grok-3 that prioritises speed and lower memory use. A good fit for everyday summarisation, Q&A, and chat workflows where low latency is important."
     },
     {
       "model_name": "deepseek",
@@ -83,9 +85,10 @@
       "supports_function_calling": true,
       "supports_images": false,
       "max_image_size_mb": 0.0,
+      "supports_streaming": true,
       "supports_temperature": true,
       "is_custom": true,
-      "description": "Local deepseek-v3 model - chinese writing capabilities"
+      "description": "Optimised for fluent, high-quality Chinese language generation. Best for Chinese copywriting, localisation, or knowledge-based Q&A where cultural and linguistic nuance is critical."
     },
     {
       "model_name": "deepseek-reasoner",
@@ -93,12 +96,13 @@
       "context_window": 65536,
       "supports_extended_thinking": false,
       "supports_json_mode": true,
+      "supports_streaming": true,
       "supports_function_calling": true,
       "supports_images": false,
       "max_image_size_mb": 0.0,
       "supports_temperature": true,
       "is_custom": true,
-      "description": "Local deepseek-r1 model - chinese reasoning capabilities"
+      "description": "Emphasises analytical reasoning in Chinese, providing structured answers and explanations for multi-step problems. Ideal for classification, analytical reports, and logic-heavy tasks."
     },
     {
       "model_name": "Gemini-2.5-Pro",
@@ -110,8 +114,9 @@
       "supports_images": false,
       "max_image_size_mb": 0.0,
       "supports_temperature": true,
+      "supports_streaming": true,
       "is_custom": true,
-      "description": "Local gemini-2.5-pro model - most advanced llm in world from google, extensive reasoning and knowledge"
+      "description": "Features a massive context window, making it ideal for research, codebase analysis, and multi-document synthesis. Its broad knowledge and strong reasoning suit creative ideation and cross-domain insight generation."
     },
     {
       "model_name": "Gemini-2.5-Flash",
@@ -124,10 +129,12 @@
       "max_image_size_mb": 0.0,
       "supports_temperature": true,
       "is_custom": true,
-      "description": "Local gemini-2.5-Flash model - fastest llm from google, suitable for any daily or routine tasks"
+      "description": "Trades some reasoning depth for faster inference, making it well-suited for high-volume, routine tasks like chat support, short summaries, and rapid ideation where latency and cost are key factors.",
+      "supports_streaming": true
     },
     {
       "model_name": "o3",
+      "supports_streaming": true,
       "aliases": [],
       "context_window": 128000,
       "supports_extended_thinking": false,
@@ -137,7 +144,7 @@
       "max_image_size_mb": 0.0,
       "supports_temperature": false,
       "is_custom": true,
-      "description": "Local o3 model - extensive reasoning model from OpenAI"
+      "description": "Specialises in extended, chain-of-thought reasoning for complex analytical prompts. Best for deep analysis, planning, or mathematical proofs where logical depth is the primary requirement."
     }
   ]
 }

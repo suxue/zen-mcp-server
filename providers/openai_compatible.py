@@ -481,6 +481,17 @@ class OpenAICompatibleProvider(ModelProvider):
                     continue  # Skip unsupported parameters for reasoning models
                 completion_params[key] = value
 
+        # Check if model supports streaming before enabling it
+        supports_streaming = getattr(capabilities, "supports_streaming", True)
+        
+        # Enable streaming by default to prevent timeouts with large/slow responses
+        # Can be overridden by explicit stream=False in kwargs
+        # Only enable streaming for chat/completions endpoint (not responses endpoint)
+        if ("stream" not in completion_params and 
+            supports_streaming and 
+            resolved_model != "o3-pro-2025-06-10"):
+            completion_params["stream"] = True
+
         # Check if this is o3-pro and needs the responses endpoint
         if resolved_model == "o3-pro-2025-06-10":
             # This model requires the /v1/responses endpoint
@@ -504,9 +515,20 @@ class OpenAICompatibleProvider(ModelProvider):
                 # Generate completion
                 response = self.client.chat.completions.create(**completion_params)
 
-                # Extract content and usage
-                content = response.choices[0].message.content
-                usage = self._extract_usage(response)
+                # Handle streaming vs non-streaming responses
+                if completion_params.get("stream", False):
+                    # Handle streaming response
+                    content, usage, metadata = self._handle_streaming_response(response)
+                else:
+                    # Handle non-streaming response
+                    content = response.choices[0].message.content
+                    usage = self._extract_usage(response)
+                    metadata = {
+                        "finish_reason": response.choices[0].finish_reason,
+                        "model": response.model,  # Actual model used
+                        "id": response.id,
+                        "created": response.created,
+                    }
 
                 return ModelResponse(
                     content=content,
@@ -514,16 +536,18 @@ class OpenAICompatibleProvider(ModelProvider):
                     model_name=model_name,
                     friendly_name=self.FRIENDLY_NAME,
                     provider=self.get_provider_type(),
-                    metadata={
-                        "finish_reason": response.choices[0].finish_reason,
-                        "model": response.model,  # Actual model used
-                        "id": response.id,
-                        "created": response.created,
-                    },
+                    metadata=metadata,
                 )
 
             except Exception as e:
                 last_exception = e
+
+                # Check if this is a streaming-related error and we can fallback to non-streaming
+                if completion_params.get("stream", False) and "streaming" in str(e).lower():
+                    logging.warning(f"Streaming failed for {model_name}, falling back to non-streaming: {e}")
+                    completion_params["stream"] = False
+                    # Retry immediately with non-streaming (don't increment attempt counter)
+                    continue
 
                 # Check if this is a retryable error using structured error codes
                 is_retryable = self._is_error_retryable(e)
@@ -640,6 +664,80 @@ class OpenAICompatibleProvider(ModelProvider):
             usage["total_tokens"] = getattr(response.usage, "total_tokens", 0) or 0
 
         return usage
+
+    def _handle_streaming_response(self, stream):
+        """Handle streaming response from OpenAI API.
+
+        Args:
+            stream: The streaming response object from OpenAI
+
+        Returns:
+            tuple: (content, usage, metadata)
+        """
+        content_parts = []
+        finish_reason = None
+        model_name = None
+        response_id = None
+        created = None
+        usage_info = None
+
+        try:
+            for chunk in stream:
+                # Handle chunk data
+                if hasattr(chunk, 'choices') and chunk.choices:
+                    choice = chunk.choices[0]
+
+                    # Collect content deltas
+                    if hasattr(choice, 'delta') and hasattr(choice.delta, 'content') and choice.delta.content:
+                        content_parts.append(choice.delta.content)
+
+                    # Get finish reason from final chunk
+                    if hasattr(choice, 'finish_reason') and choice.finish_reason:
+                        finish_reason = choice.finish_reason
+
+                # Collect metadata from chunk
+                if hasattr(chunk, 'model') and chunk.model:
+                    model_name = chunk.model
+                if hasattr(chunk, 'id') and chunk.id:
+                    response_id = chunk.id
+                if hasattr(chunk, 'created') and chunk.created:
+                    created = chunk.created
+
+                # Extract usage info from final chunk (if available)
+                if hasattr(chunk, 'usage') and chunk.usage:
+                    usage_info = chunk.usage
+
+        except Exception as e:
+            # If streaming fails, log and raise to trigger retry with non-streaming
+            logging.warning(f"Streaming response failed: {e}")
+            raise
+
+        # Combine all content parts
+        content = "".join(content_parts)
+
+        # Extract usage information
+        usage = {}
+        if usage_info:
+            usage["input_tokens"] = getattr(usage_info, "prompt_tokens", 0) or 0
+            usage["output_tokens"] = getattr(usage_info, "completion_tokens", 0) or 0
+            usage["total_tokens"] = getattr(usage_info, "total_tokens", 0) or 0
+        else:
+            # Fallback - estimate tokens if usage not provided in stream
+            # This is a rough estimation and may not be accurate
+            usage["input_tokens"] = 0
+            usage["output_tokens"] = 0
+            usage["total_tokens"] = 0
+
+        # Build metadata
+        metadata = {
+            "finish_reason": finish_reason,
+            "model": model_name,
+            "id": response_id,
+            "created": created,
+            "streaming": True,  # Flag to indicate this was a streaming response
+        }
+
+        return content, usage, metadata
 
     @abstractmethod
     def get_capabilities(self, model_name: str) -> ModelCapabilities:

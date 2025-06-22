@@ -162,17 +162,17 @@ server: Server = Server("zen-server")
 # Tools are instantiated once and reused across requests (stateless design)
 TOOLS = {
     "thinkdeep": ThinkDeepTool(),  # Step-by-step deep thinking workflow with expert analysis
-    "codereview": CodeReviewTool(),  # Comprehensive step-by-step code review workflow with expert analysis
-    "debug": DebugIssueTool(),  # Root cause analysis and debugging assistance
+    #"codereview": CodeReviewTool(),  # Comprehensive step-by-step code review workflow with expert analysis
+    #"debug": DebugIssueTool(),  # Root cause analysis and debugging assistance
     "analyze": AnalyzeTool(),  # General-purpose file and code analysis
     "chat": ChatTool(),  # Interactive development chat and brainstorming
     "consensus": ConsensusTool(),  # Multi-model consensus for diverse perspectives on technical proposals
     "listmodels": ListModelsTool(),  # List all available AI models by provider
     "planner": PlannerTool(),  # Interactive sequential planner using workflow architecture
-    "precommit": PrecommitTool(),  # Step-by-step pre-commit validation workflow
-    "testgen": TestGenTool(),  # Step-by-step test generation workflow with expert validation
-    "refactor": RefactorTool(),  # Step-by-step refactoring analysis workflow with expert validation
-    "tracer": TracerTool(),  # Static call path prediction and control flow analysis
+    #"precommit": PrecommitTool(),  # Step-by-step pre-commit validation workflow
+    #"testgen": TestGenTool(),  # Step-by-step test generation workflow with expert validation
+    #"refactor": RefactorTool(),  # Step-by-step refactoring analysis workflow with expert validation
+    #"tracer": TracerTool(),  # Static call path prediction and control flow analysis
 }
 
 # Rich prompt templates for all tools
